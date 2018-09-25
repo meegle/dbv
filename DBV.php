@@ -140,7 +140,7 @@ class DBV
 
     public function revisionsAction()
     {
-        $revisions = isset($_POST['revisions']) ? array_filter($_POST['revisions'], 'is_numeric') : array();
+        $revisions = isset($_POST['revisions']) ? array_filter($_POST['revisions'], '\\DBV\\Revisions\\Helper::checkName') : array();
         $current_revision = $this->_getCurrentRevision();
 
         if (count($revisions)) {
@@ -180,10 +180,15 @@ class DBV
         }
     }
 
-
     public function saveRevisionFileAction()
     {
-        $revision = intval($_POST['revision']);
+        $revision = $_POST['revision'];
+        if (!\DBV\Revisions\Helper::checkName($revision)) {
+            $this->_json([
+                'error' => __("Revision #{revision} contains illegal characters.", array('revision' => $_POST['revision']))
+            ]);
+        }
+
         if (preg_match('/^[a-z0-9\._]+$/i', $_POST['file'])) {
             $file = $_POST['file'];
         } else {
@@ -324,7 +329,7 @@ class DBV
         $return = array();
 
         foreach (new DirectoryIterator(DBV_REVISIONS_PATH) as $file) {
-            if ($file->isDir() && !$file->isDot() && is_numeric($file->getBasename())) {
+            if ($file->isDir() && !$file->isDot() && \DBV\Revisions\Helper::checkName($file->getBasename())) {
                 $return[] = $file->getBasename();
             }
         }

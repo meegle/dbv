@@ -49,8 +49,8 @@
             </tbody>
         </table>
 
-        <button data-role="create" class="btn btn-primary btn-mini"><?php echo __('Push to database'); ?></button>
-        <button data-role="export" class="btn btn-primary btn-mini"><?php echo __('Export to disk'); ?></button>
+        <button data-role="create" class="btn btn-primary btn-small"><?php echo __('Push to database'); ?></button>
+        <button data-role="export" class="btn btn-primary btn-small"><?php echo __('Export to disk'); ?></button>
     </form>
 
     <script type="text/javascript">
