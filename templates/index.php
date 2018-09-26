@@ -18,13 +18,14 @@
     <script type="text/javascript">
     var j$ = jQuery.noConflict();
     </script>
+    <script type="text/javascript" src="public/scripts/bootstrap.min.js"></script>
 
     <script type="text/javascript" src="public/scripts/prototype.js"></script>
     <script type="text/javascript" src="public/scripts/builder.js"></script>
     <script type="text/javascript" src="public/scripts/effects.js"></script>
 
     <script type="text/javascript" src="public/scripts/codemirror/codemirror.js"></script>
-    <script type="text/javascript" src="public/scripts/codemirror/mode/mysql.js"></script>
+    <script type="text/javascript" src="public/scripts/codemirror/mode/sql.js"></script>
     <script type="text/javascript" src="public/scripts/codemirror/mode/php.js"></script>
 
     <script type="text/javascript" src="public/scripts/dbv.js"></script>
@@ -47,14 +48,20 @@
             <?php $this->_view('log'); ?>
         </div>
         <div class="row-fluid">
-            <div class="span4">
-                <div id="left">
-                    <?php $this->_view('schema'); ?>
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#tab-pane-schema" data-toggle="tab"><?php echo __('Database schema'); ?></a></li>
+                <li><a href="#tab-pane-revisions" data-toggle="tab"><?php echo __('Revisions'); ?></a></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="tab-pane-schema">
+                    <div id="left">
+                        <?php $this->_view('schema'); ?>
+                    </div>
                 </div>
-            </div>
-            <div class="span8">
-                <div id="right">
-                    <?php $this->_view('revisions'); ?>
+                <div class="tab-pane" id="tab-pane-revisions">
+                    <div id="right">
+                        <?php $this->_view('revisions'); ?>
+                    </div>
                 </div>
             </div>
         </div>

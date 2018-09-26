@@ -149,6 +149,7 @@ class DBV
             foreach ($revisions as $revision) {
                 $files = $this->_getRevisionFiles($revision);
 
+                $tmpstr = '';
                 if (count($files)) {
                     foreach ($files as $file) {
                         $file = DBV_REVISIONS_PATH . DS . $revision . DS . $file;
@@ -156,12 +157,26 @@ class DBV
                             break 2;
                         }
                     }
+
+                    $tmpstr .= ';Update Status:';
+                    // Update Status
+                    $obj = new \DBV\Revisions\RunStatus($revision);
+                    if (($obj->modify([
+                        'status'          => true,
+                        'lastly_run_time' => time()
+                    ]))) {
+                        $tmpstr .= 'Success.';
+                    } else {
+                        $tmpstr .= 'Failed,'.$obj->getError();
+                    }
                 }
 
                 if ($revision > $current_revision) {
                     $this->_setCurrentRevision($revision);
                 }
-                $this->confirm(__("Executed revision #{revision}", array('revision' => "<strong>$revision</strong>")));
+                $this->confirm(__('Executed revision #{revision}'.$tmpstr, [
+                    'revision' => '<strong>'.$revision.'</strong>'
+                ]));
             }
         }
 
@@ -177,6 +192,25 @@ class DBV
 
         } else {
             $this->indexAction();
+        }
+    }
+
+    public function refreshAction()
+    {
+        $revisions = isset($_POST['revisions']) ? array_filter($_POST['revisions'], '\\DBV\\Revisions\\Helper::checkName') : [];
+
+        $errors = [];
+        foreach ($revisions as $revision) {
+            $obj = new \DBV\Revisions\RunStatus($revision);
+            if ($obj->refresh() === false) {
+                $errors[] = $obj->getError();
+            }
+        }
+
+        if (!empty($errors)) {
+            $this->_json(['error' => nl2br(implode("\n", $errors))]);
+        } else {
+            $this->_json(['ok' => true, 'message' => 'Successfully refreshed!']);
         }
     }
 

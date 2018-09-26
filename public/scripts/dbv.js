@@ -28,7 +28,7 @@ function render_messages(type, container, messages, heading) {
         close.on('click', function () {
             this.up('.alert').remove();
         });
-    element.insert(close);  
+    element.insert(close);
 
     if (typeof heading != 'undefined') {
         element.insert(heading);

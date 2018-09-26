@@ -15,3 +15,27 @@ function __($message, $params = array())
 
     return $return;
 }
+
+/**
+ * 基础数据类型转字符串
+ * @param  mixed $mixed 基础数据
+ * @return string
+ */
+function mixed2string($mixed)
+{
+    if (is_bool($mixed)) {
+        return $mixed ? 'true' : 'false';
+    }
+
+    if (is_numeric($mixed) || is_string($mixed)) {
+        return $mixed;
+    }
+
+    if (is_null($mixed)) return 'null';
+
+    if (is_object($mixed) || is_array($mixed) || is_resource($mixed)) {
+        return serialize($mixed);
+    }
+
+    return 'unknown';
+}

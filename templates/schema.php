@@ -1,11 +1,10 @@
 <?php
-	$selected = "tables";
-	if (in_array($this->_action, array("tables", "views"))) {
-		$selected = $this->_action;
-	}
+    $selected = "tables";
+    if (in_array($this->_action, array("tables", "views"))) {
+        $selected = $this->_action;
+    }
 ?>
 
-<h2><?php echo __('Database schema'); ?></h2>
 <div class="log"></div>
 
 <?php if (isset($this->schema) && count($this->schema)) { ?>
@@ -106,5 +105,5 @@
         });
     </script>
 <?php } else { ?>
-	<div class="alert alert-info nomargin"><?php echo __('No schema objects found on disk or in the database.'); ?></div>
+    <div class="alert alert-info nomargin"><?php echo __('No schema objects found on disk or in the database.'); ?></div>
 <?php } ?>
