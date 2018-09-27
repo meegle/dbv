@@ -1,0 +1,7 @@
+{
+    "name": "dbv",
+    "description": "A database version control web application featuring schema management, revision scripts, and more!",
+    "require": {
+        "ramsey/uuid": "^3.7"
+    }
+}

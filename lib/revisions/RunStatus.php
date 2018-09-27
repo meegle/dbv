@@ -20,7 +20,7 @@ class RunStatus
     }
 
     /**
-     * 刷新执行状态
+     * 刷新修改时间
      * @return boolean
      */
     public function refresh()
@@ -34,7 +34,7 @@ class RunStatus
     }
 
     /**
-     * 生成执行状态
+     * 生成状态文件
      * @return boolean
      */
     public function create()
@@ -46,14 +46,26 @@ class RunStatus
         ]);
     }
 
+    /**
+     * 更新状态文件
+     * @param  array $data 待更新内容
+     * @return boolean
+     */
     public function modify(array $data = [])
     {
         if (!$this->_checkRevision()) return false;
 
-        $tmp = $this->get();
-        if (!$tmp) return false;
+        if (!$this->_checkStatus(false)) {
+            $data = array_merge([
+                'modify_time' => filemtime($this->_revision_file)
+            ], $data);
+        } else {
+            $tmp = $this->get();
+            if (!$tmp) return false;
 
-        $data = array_merge($tmp, $data);
+            $data = array_merge($tmp, $data);
+        }
+
         return $this->_set($data);
     }
 
@@ -116,7 +128,7 @@ class RunStatus
     }
 
     /**
-     * 获取执行状态
+     * 获取状态
      * @return mixed
      */
     public function get()
@@ -127,6 +139,10 @@ class RunStatus
         return $data;
     }
 
+    /**
+     * 获取出错信息
+     * @return string
+     */
     public function getError()
     {
         return $this->_error;

@@ -29,6 +29,7 @@
     <script type="text/javascript" src="public/scripts/codemirror/mode/php.js"></script>
 
     <script type="text/javascript" src="public/scripts/dbv.js"></script>
+    <script type="text/javascript" src="public/scripts/moment.min.js"></script>
 </head>
 <body>
     <div class="navbar navbar-static-top navbar-inverse">

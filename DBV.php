@@ -158,13 +158,13 @@ class DBV
                         }
                     }
 
-                    $tmpstr .= ';Update Status:';
+                    $tmpstr .= '; Update Status:';
                     // Update Status
                     $obj = new \DBV\Revisions\RunStatus($revision);
-                    if (($obj->modify([
+                    if ($obj->modify([
                         'status'          => true,
                         'lastly_run_time' => time()
-                    ]))) {
+                    ])) {
                         $tmpstr .= 'Success.';
                     } else {
                         $tmpstr .= 'Failed,'.$obj->getError();
@@ -219,16 +219,16 @@ class DBV
         $revision = $_POST['revision'];
         if (!\DBV\Revisions\Helper::checkName($revision)) {
             $this->_json([
-                'error' => __("Revision #{revision} contains illegal characters.", array('revision' => $_POST['revision']))
+                'error' => __('Revision #{revision} contains illegal characters.', ['revision' => $_POST['revision']])
             ]);
         }
 
         if (preg_match('/^[a-z0-9\._]+$/i', $_POST['file'])) {
             $file = $_POST['file'];
         } else {
-            $this->_json(array(
-                'error' => __("Filename #{file} contains illegal characters. Please contact the developer.", array('file' => $_POST['file']))
-            ));
+            $this->_json([
+                'error' => __('Filename #{file} contains illegal characters. Please contact the developer.', ['file' => $_POST['file']])
+            ]);
         }
 
         $path = DBV_REVISIONS_PATH . DS . $revision . DS . $file;
@@ -239,12 +239,46 @@ class DBV
         $content = $_POST['content'];
 
         if (!@file_put_contents($path, $content)) {
-            $this->_json(array(
-                'error' => __("Couldn't write file: #{path}<br />Make sure the user running DBV has adequate permissions.", array('path' => "<strong>$path</strong>"))
-            ));
+            $this->_json([
+                'error' => __('Couldn\'t write file: #{path}<br />Make sure the user running DBV has adequate permissions.', [
+                    'path' => '<strong>'.$path.'</strong>'
+                ])
+            ]);
         }
 
-        $this->_json(array('ok' => true, 'message' => __("File #{path} successfully saved!", array('path' => "<strong>$path</strong>"))));
+        /**
+         * Trigger update folder modification time by creating a temporary file
+         */
+        $uuidStatus = true;
+        try {
+            $uuid = \Ramsey\Uuid\Uuid::uuid4();
+        } catch(\Ramsey\Uuid\Exception\UnsatisfiedDependencyException $e) {
+            $uuidStatus = false;
+        }
+
+        $response = [
+            'ok'      => true,
+            'message' => __('File #{path} successfully saved!', ['path' => '<strong>'.$path.'</strong>']),
+        ];
+        if ($uuidStatus) {
+            $tmpfile = DBV_REVISIONS_PATH.DS.$revision.DS.$uuid->toString();
+            @file_put_contents($tmpfile, '');
+            @unlink($tmpfile);
+
+            // Update Status
+            $obj = new \DBV\Revisions\RunStatus($revision);
+            if ($obj->refresh() === false) {
+                $msg .= __('Update #{revision} modification time failed', ['revision' => $revision]).','.$obj->getError();
+            } else {
+                $msg .= __('Update Revisions modification time is successful', ['revision' => $revision]).'.';
+                $response['data'] = $obj->get();
+            }
+        } else {
+            $msg = __('Update #{revision} modification time failed', ['revision' => $revision]);
+        }
+        $response['message'] .= $msg;
+
+        $this->_json($response);
     }
 
     protected function _createSchemaObject($item)

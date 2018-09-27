@@ -1,4 +1,8 @@
 <?php if (isset($this->revisions) && count($this->revisions)) { ?>
+    <p>
+        <span class="label label-important"><?php echo __('Remark');?></span>
+        <span><?php echo __('The modification time is red font, which means that the SQL is modified and needs to be processed manually.');?></span>
+    </p>
     <form method="post" action="" class="nomargin" id="revisions">
         <div class="log"></div>
         <div id="logModal" class="modal hide fade" tabindex="-1">
@@ -36,26 +40,26 @@
                             <input type="checkbox" name="revisions[]" value="<?php echo $revision; ?>"<?php echo $ran ? '' : ' checked="checked"'; ?> style="margin-top: 7px;" />
                         </td>
                         <td><a href="javascript:" class="revision-handle"><?php echo $revision; ?></a></td>
-                        <td>
+                        <td data-id="status">
                             <?php if ($info['status']):?>
                             <span class="label label-success">ACTIVE</span>
                             <?php else:?>
                             <span class="label label-important">INACTIVE</span>
                             <?php endif;?>
                         </td>
-                        <td>
+                        <td data-id="modify_time">
                             <?php if (!$info['modify_time']):?>
                                 -
                             <?php else:?>
                                 <?php if ($info['lastly_run_time'] && $info['lastly_run_time'] < $info['modify_time']):?>
-                                    <?php $tmp = 'text-warning';?>
+                                    <?php $tmp = 'text-error';?>
                                 <?php else:?>
                                     <?php $tmp = 'text-info';?>
                                 <?php endif;?>
                                 <span class="<?php echo $tmp;?>"><?php echo date('Y-m-d H:i:s', $info['modify_time']);?></span>
                             <?php endif;?>
                         </td>
-                        <td><?php echo $info['lastly_run_time'] ? date('Y-m-d H:i:s', $info['lastly_run_time']) : '-';?></td>
+                        <td data-id="lastly_run_time"><?php echo $info['lastly_run_time'] ? date('Y-m-d H:i:s', $info['lastly_run_time']) : '-';?></td>
                     </tr>
                     <tr class="revision-files hidden">
                         <td colspan="4">
@@ -94,10 +98,16 @@
 <?php } ?>
 <script type="text/javascript">
     document.observe('dom:loaded', function () {
+        // 识别Tab,自动切换标签页
+        if (location.hash) {
+            j$('a[href="' + location.hash + '"]').tab('show');
+        }
+
         var form = $('revisions');
         if (!form) {
             return;
         }
+        var j$form = j$(form);
 
         var textareas = form.select('textarea');
         textareas.each(function (textarea) {
@@ -170,11 +180,31 @@
                     }
 
                     render_messages('success', container, response.message);
+
+                    // Update Modify Time
+                    var modify_time = '';
+                    if (!response.data.modify_time) {
+                        modify_time = '-';
+                    } else {
+                        var tmp = '';
+                        if (response.data.lastly_run_time && response.data.lastly_run_time < response.data.modify_time) {
+                            tmp = 'text-error';
+                        } else {
+                            tmp = 'text-info';
+                        }
+                        modify_time = '<span class="' + tmp + '">'
+                            + moment(parseInt(response.data.modify_time + '000')).format('YYYY-MM-DD hh:mm:ss')
+                            + '</span>';
+                    }
+                    j$(self).closest('tr').prev('tr[data-revision]').children('td[data-id="modify_time"]').html(modify_time);
                 }
             });
         });
 
-        var alert_messages = function(type, messages, heading) {
+        var reloadTabPane = function() {
+            window.location.href = '?t=' + (new Date()).getTime() + '#' + j$form.closest('.tab-pane').attr('id');
+        };
+        var alert_messages = function(type, messages, heading, callback) {
             // 标题
             var header = '';
             if (type === 'error') {
@@ -195,6 +225,10 @@
             j$('#logModal')
                 .children('.modal-header').html(header)
                 .end().children('.modal-body').html(content)
+                .end().find('.modal-footer > button').one('click', function() {
+                    if (j$.isFunction(callback)) callback();
+                    return false;
+                })
                 .end().modal({
                     backdrop: 'static'
                 });
@@ -229,11 +263,11 @@
                     }
 
                     if (response.messages.error) {
-                        alert_messages('error', response.messages.error, '<?php echo __('The following errors occured:'); ?>');
+                        alert_messages('error', response.messages.error, '<?php echo __('The following errors occured:'); ?>', reloadTabPane);
                     }
 
                     if (response.messages.success) {
-                        alert_messages('success', response.messages.success, '<?php echo __('The following actions completed successfuly:'); ?>');
+                        alert_messages('success', response.messages.success, '<?php echo __('The following actions completed successfuly:'); ?>', reloadTabPane);
                     }
 
                     var revision = parseInt(response.revision);
@@ -256,7 +290,6 @@
             });
         });
 
-        var j$form = j$('#revisions');
         j$form.find(':button[data-action="refresh"]').on('click', function() {
             var j$button = j$(this);
             var buttonText = j$button.val();
@@ -290,9 +323,9 @@
                         .val(buttonText);
 
                     if (res.error) {
-                        alert_messages('error', res.error, '<?php echo __('Errors occured:');?>');
+                        alert_messages('error', res.error, '<?php echo __('Errors occured:');?>', reloadTabPane);
                     } else {
-                        alert_messages('success', res.message, '<?php echo __('Successfuly:');?>');
+                        alert_messages('success', res.message, '<?php echo __('Successfuly:');?>', reloadTabPane);
                     }
                 }
             });
